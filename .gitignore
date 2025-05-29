@@ -1,0 +1,4 @@
+/internal/db/*.go
+/internal/db/migrations
+/go.mod
+/go.sum
