@@ -8,7 +8,7 @@ import (
 )
 
 func NewConnectionDB() (*sql.DB, error) {
-	coonStr := "passord=root user=postgres dbname=postgres sslmode=disable"
+	coonStr := "password=root user=postgres dbname=postgres sslmode=disable"
 	conn, err := sql.Open("postgres", coonStr)
 
 	if err != nil {

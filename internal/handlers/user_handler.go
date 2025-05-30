@@ -25,7 +25,7 @@ func (h *UserHandler) CreateUserHandler(w http.ResponseWriter, r *http.Request) 
 	email := r.FormValue("email")
 	password := r.FormValue("password")
 
-	err := validate.Var(username, "required,min=3, max=30")
+	err := validate.Var(username, "required,min=3,max=30")
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Invalid username: %v", err), http.StatusBadRequest)
 		fmt.Println(err)
@@ -37,7 +37,7 @@ func (h *UserHandler) CreateUserHandler(w http.ResponseWriter, r *http.Request) 
 		fmt.Println(err)
 	}
 
-	err = validate.Var(password, "required,min=6, max=12")
+	err = validate.Var(password, "required,min=6,max=12")
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Invalid password: %v", err), http.StatusBadRequest)
 		fmt.Println(err)

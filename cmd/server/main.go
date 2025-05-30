@@ -22,9 +22,9 @@ func main() {
 	queries := db.New(conn)
 	r := routes.SetupRoutes(queries)
 
-	fmt.Println("Server is running on http://localhost:3000")
+	fmt.Println("Server is running on http://localhost:8080")
 
-	if err := http.ListenAndServe(":3000", r); err != nil {
+	if err := http.ListenAndServe(":8080", r); err != nil {
 		log.Fatalf("Error starting server: %v", err)
 	}
 }

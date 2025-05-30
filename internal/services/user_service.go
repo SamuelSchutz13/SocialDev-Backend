@@ -18,6 +18,10 @@ func NewUserService(userRepo *repository.UserRepository) *UserService {
 	return &UserService{userRepo: userRepo}
 }
 
+func GetUserService(userRepo *repository.UserRepository) *UserService {
+	return &UserService{userRepo: userRepo}
+}
+
 func (s *UserService) CreateUser(username, email, password string) (db.User, error) {
 	ctx := context.Background()
 
