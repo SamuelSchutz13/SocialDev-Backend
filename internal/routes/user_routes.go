@@ -14,5 +14,5 @@ func SetupUserRoutes(r *http.ServeMux, queries *db.Queries) {
 	userService := services.NewUserService(userRepo)
 	userHandler := handlers.NewUserHandler(userService)
 
-	r.HandleFunc("POST /api/users", userHandler.CreateUserHandler)
+	r.HandleFunc("POST /users/create", userHandler.CreateUserHandler)
 }

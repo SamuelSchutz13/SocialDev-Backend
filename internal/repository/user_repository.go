@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"github.com/SamuelSchutz13/SocialDev/internal/db"
@@ -22,8 +21,6 @@ func (r *UserRepository) CreateUser(ctx context.Context, params db.CreateUserPar
 	if err != nil {
 		log.Printf("%v", err)
 	}
-
-	fmt.Println(user)
 
 	return user, err
 }

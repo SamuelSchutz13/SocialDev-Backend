@@ -1,10 +1,10 @@
 -- name: GetAllUsers :many	
 SELECT * FROM users;
 
--- name: GetUsers :one
+-- name: GetUser :one
 SELECT * FROM users WHERE user_id = $1 LIMIT 1;
 
--- name: GetUsersWithUsername :many
+-- name: GetUserWithUsername :many
 SELECT username, avatar FROM users WHERE username = $1;
 
 -- name: CreateUser :one
