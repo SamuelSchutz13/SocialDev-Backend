@@ -41,3 +41,13 @@ func (s *UserService) CreateUser(username, email, password string) (db.User, err
 
 	return s.userRepo.CreateUser(ctx, userParams)
 }
+
+func (s *UserService) GetUser(userID uuid.UUID) (db.GetUserRow, error) {
+	ctx := context.Background()
+	return s.userRepo.GetUser(ctx, userID)
+}
+
+func (s *UserService) GetAllUsers() ([]db.User, error) {
+	ctx := context.Background()
+	return s.userRepo.GetAllUsers(ctx)
+}

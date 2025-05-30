@@ -1,11 +1,14 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/SamuelSchutz13/SocialDev/internal/services"
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 )
 
 type UserHandler struct {
@@ -51,4 +54,52 @@ func (h *UserHandler) CreateUserHandler(w http.ResponseWriter, r *http.Request) 
 
 	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte("User created successfully"))
+}
+
+func (h *UserHandler) GetUserHandler(w http.ResponseWriter, r *http.Request) {
+	user_id := r.URL.Path
+	userID := strings.TrimPrefix(user_id, "/user/")
+
+	uuid, err := uuid.Parse(userID)
+
+	if err != nil {
+		http.Error(w, "Invalid user ID format", http.StatusBadRequest)
+		return
+	}
+
+	user, err := h.userService.GetUser(uuid)
+
+	if err != nil {
+		http.Error(w, "Failed to get user", http.StatusInternalServerError)
+		return
+	}
+
+	res, err := json.Marshal(user)
+
+	if err != nil {
+		http.Error(w, "Failed to marshal user", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(res))
+}
+
+func (h *UserHandler) GetAllUsersHandler(w http.ResponseWriter, r *http.Request) {
+	users, err := h.userService.GetAllUsers()
+
+	if err != nil {
+		http.Error(w, "Failed to get users", http.StatusInternalServerError)
+		return
+	}
+
+	res, err := json.Marshal(users)
+
+	if err != nil {
+		http.Error(w, "Failed to marshal users", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(res))
 }

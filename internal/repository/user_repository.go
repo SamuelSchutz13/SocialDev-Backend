@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/SamuelSchutz13/SocialDev/internal/db"
+	"github.com/google/uuid"
 )
 
 type UserRepository struct {
@@ -12,6 +13,10 @@ type UserRepository struct {
 }
 
 func NewUserRepository(queries *db.Queries) *UserRepository {
+	return &UserRepository{queries: queries}
+}
+
+func GetUserRepository(queries *db.Queries) *UserRepository {
 	return &UserRepository{queries: queries}
 }
 
@@ -23,4 +28,24 @@ func (r *UserRepository) CreateUser(ctx context.Context, params db.CreateUserPar
 	}
 
 	return user, err
+}
+
+func (r *UserRepository) GetUser(ctx context.Context, user_id uuid.UUID) (db.GetUserRow, error) {
+	user, err := r.queries.GetUser(ctx, user_id)
+
+	if err != nil {
+		log.Printf("%v", err)
+	}
+
+	return user, err
+}
+
+func (r *UserRepository) GetAllUsers(ctx context.Context) ([]db.User, error) {
+	allUsers, err := r.queries.GetAllUsers(ctx)
+
+	if err != nil {
+		log.Printf("%v", err)
+	}
+
+	return allUsers, err
 }
