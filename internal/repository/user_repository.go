@@ -49,3 +49,13 @@ func (r *UserRepository) GetAllUsers(ctx context.Context) ([]db.User, error) {
 
 	return allUsers, err
 }
+
+func (r *UserRepository) GetUserWithUsername(ctx context.Context, username string) (db.GetUserWithUsernameRow, error) {
+	getUserWithUsername, err := r.queries.GetUserWithUsername(ctx, username)
+
+	if err != nil {
+		log.Printf("%v", err)
+	}
+
+	return getUserWithUsername, err
+}

@@ -51,3 +51,8 @@ func (s *UserService) GetAllUsers() ([]db.User, error) {
 	ctx := context.Background()
 	return s.userRepo.GetAllUsers(ctx)
 }
+
+func (s *UserService) GetUserWithUsername(username string) (db.GetUserWithUsernameRow, error) {
+	ctx := context.Background()
+	return s.userRepo.GetUserWithUsername(ctx, username)
+}

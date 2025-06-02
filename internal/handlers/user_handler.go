@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 
@@ -19,6 +20,10 @@ func NewUserHandler(userService *services.UserService) *UserHandler {
 	return &UserHandler{userService: userService}
 }
 
+type UserWithUsername struct {
+	Username string
+}
+
 var validate *validator.Validate
 
 func (h *UserHandler) CreateUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -29,21 +34,21 @@ func (h *UserHandler) CreateUserHandler(w http.ResponseWriter, r *http.Request) 
 	password := r.FormValue("password")
 
 	err := validate.Var(username, "required,min=3,max=30")
+
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Invalid username: %v", err), http.StatusBadRequest)
-		fmt.Println(err)
 	}
 
 	err = validate.Var(email, "required,email")
+
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Invalid email: %v", err), http.StatusBadRequest)
-		fmt.Println(err)
 	}
 
 	err = validate.Var(password, "required,min=6,max=12")
+
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Invalid password: %v", err), http.StatusBadRequest)
-		fmt.Println(err)
 	}
 
 	_, err = h.userService.CreateUser(username, email, password)
@@ -97,6 +102,50 @@ func (h *UserHandler) GetAllUsersHandler(w http.ResponseWriter, r *http.Request)
 
 	if err != nil {
 		http.Error(w, "Failed to marshal users", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(res))
+}
+
+func (h *UserHandler) GetUserWithUsernameHandler(w http.ResponseWriter, r *http.Request) {
+	rb := r.Body
+
+	usernameRead, err := io.ReadAll(rb)
+
+	if err != nil {
+		fmt.Printf("%v", err)
+	}
+
+	rb.Close()
+
+	var username UserWithUsername
+	err = json.Unmarshal(usernameRead, &username)
+
+	if err != nil {
+		fmt.Printf("%v", err)
+	}
+
+	validate = validator.New()
+
+	err = validate.Var(username, "required,min=3,max=30,alpha")
+
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid username: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	user, err := h.userService.GetUserWithUsername(username.Username)
+
+	if err != nil {
+		http.Error(w, "Failed to get user with username", http.StatusInternalServerError)
+	}
+
+	res, err := json.Marshal(user)
+
+	if err != nil {
+		http.Error(w, "Failed to marshal user with username", http.StatusInternalServerError)
 		return
 	}
 
