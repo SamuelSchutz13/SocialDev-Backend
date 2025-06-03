@@ -2,11 +2,11 @@ package services
 
 import (
 	"context"
-	"database/sql"
 	"log"
 
 	"github.com/SamuelSchutz13/SocialDev/internal/db"
 	"github.com/SamuelSchutz13/SocialDev/internal/repository"
+	"github.com/SamuelSchutz13/SocialDev/utils"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -17,14 +17,6 @@ type UserService struct {
 
 func NewUserService(userRepo *repository.UserRepository) *UserService {
 	return &UserService{userRepo: userRepo}
-}
-
-func stringToNull(s string) sql.NullString {
-	if s == "" {
-		return sql.NullString{Valid: false}
-	}
-
-	return sql.NullString{String: s, Valid: true}
 }
 
 func GetUserService(userRepo *repository.UserRepository) *UserService {
@@ -74,11 +66,11 @@ func (s *UserService) UpdateUser(user_id uuid.UUID, username, email, password, a
 		Username: username,
 		Email:    email,
 		Password: password,
-		Avatar:   stringToNull(avatar),
-		Bio:      stringToNull(bio),
-		Github:   stringToNull(github),
-		Linkedin: stringToNull(linkedin),
-		Website:  stringToNull(website),
+		Avatar:   utils.StringToSqlNull(avatar),
+		Bio:      utils.StringToSqlNull(bio),
+		Github:   utils.StringToSqlNull(github),
+		Linkedin: utils.StringToSqlNull(linkedin),
+		Website:  utils.StringToSqlNull(website),
 	})
 }
 
