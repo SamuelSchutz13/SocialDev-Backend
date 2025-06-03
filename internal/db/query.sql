@@ -2,8 +2,7 @@
 SELECT * FROM users;
 
 -- name: GetUser :one
-SELECT username,avatar, bio, github, linkedin, website, email, created_at
-FROM users WHERE user_id = $1 LIMIT 1;
+SELECT * FROM users WHERE user_id = $1 LIMIT 1;
 
 -- name: GetUserWithUsername :one
 SELECT username, avatar FROM users WHERE username LIKE $1;
@@ -16,7 +15,7 @@ INSERT INTO users (
 ) ON CONFLICT (username) DO NOTHING 
 RETURNING *;
 
--- name: UpdateUser :exec
+-- name: UpdateUser :one
 UPDATE users 
     SET username = $2, 
     email = $3, 
@@ -25,8 +24,10 @@ UPDATE users
     bio = $6, 
     github = $7, 
     linkedin = $8, 
-    website = $9 
-WHERE user_id = $1;
+    website = $9,
+    updated_at = CURRENT_TIMESTAMP
+WHERE user_id = $1
+RETURNING *;
 
 -- name: DeleteUser :exec
 DELETE FROM users WHERE user_id = $1;

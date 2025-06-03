@@ -30,7 +30,7 @@ func (r *UserRepository) CreateUser(ctx context.Context, params db.CreateUserPar
 	return user, err
 }
 
-func (r *UserRepository) GetUser(ctx context.Context, user_id uuid.UUID) (db.GetUserRow, error) {
+func (r *UserRepository) GetUser(ctx context.Context, user_id uuid.UUID) (db.User, error) {
 	user, err := r.queries.GetUser(ctx, user_id)
 
 	if err != nil {
@@ -58,4 +58,14 @@ func (r *UserRepository) GetUserWithUsername(ctx context.Context, username strin
 	}
 
 	return getUserWithUsername, err
+}
+
+func (r *UserRepository) UpdateUser(ctx context.Context, params db.UpdateUserParams) (db.User, error) {
+	user, err := r.queries.UpdateUser(ctx, params)
+
+	if err != nil {
+		log.Printf("%v", err)
+	}
+
+	return user, err
 }

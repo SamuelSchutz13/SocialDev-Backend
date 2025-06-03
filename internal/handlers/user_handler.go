@@ -24,6 +24,18 @@ type UserWithUsername struct {
 	Username string
 }
 
+type UpdateUserRequest struct {
+	UserID   uuid.UUID `json:"user_id"`
+	Username string    `json:"username"`
+	Email    string    `json:"email"`
+	Password string    `json:"password"`
+	Avatar   string    `json:"avatar"`
+	Bio      string    `json:"bio"`
+	Github   string    `json:"github"`
+	Linkedin string    `json:"linkedin"`
+	Website  string    `json:"website"`
+}
+
 var validate *validator.Validate
 
 func (h *UserHandler) CreateUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -110,45 +122,121 @@ func (h *UserHandler) GetAllUsersHandler(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *UserHandler) GetUserWithUsernameHandler(w http.ResponseWriter, r *http.Request) {
-	rb := r.Body
-
-	usernameRead, err := io.ReadAll(rb)
-
-	if err != nil {
-		fmt.Printf("%v", err)
-	}
-
-	rb.Close()
-
-	var username UserWithUsername
-	err = json.Unmarshal(usernameRead, &username)
-
-	if err != nil {
-		fmt.Printf("%v", err)
-	}
+	username := r.URL.Query().Get("username")
 
 	validate = validator.New()
 
-	err = validate.Var(username, "required,min=3,max=30,alpha")
+	err := validate.Var(username, "required,max=30")
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Invalid username: %v", err), http.StatusBadRequest)
 		return
 	}
 
-	user, err := h.userService.GetUserWithUsername(username.Username)
+	user, err := h.userService.GetUserWithUsername(username)
 
 	if err != nil {
-		http.Error(w, "Failed to get user with username", http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("Error getting user with username: %v", err), http.StatusInternalServerError)
+		return
 	}
 
 	res, err := json.Marshal(user)
 
 	if err != nil {
-		http.Error(w, "Failed to marshal user with username", http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("Error marshalling user: %v", err), http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(res))
+}
+
+func (h *UserHandler) UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
+	user_id := r.URL.Path
+	userID := strings.TrimPrefix(user_id, "/user/update/")
+
+	convertUUID, err := uuid.Parse(userID)
+
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid user ID: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	user, err := h.userService.GetUser(convertUUID)
+
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error reading request body: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	rb := r.Body
+	reader, err := io.ReadAll(rb)
+
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to get user: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	rb.Close()
+
+	var userUpdate *UpdateUserRequest
+	err = json.Unmarshal(reader, &userUpdate)
+
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error unmarshalling request body: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	validate = validator.New()
+
+	err = validate.Var(userUpdate.Username, "required,min=3,max=30,alpha")
+
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid username: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	err = validate.Var(userUpdate.Email, "required,email")
+
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid email: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	err = validate.Var(userUpdate.Password, "required,min=6,max=12")
+
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid password: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	if userUpdate.Username == "" {
+		userUpdate.Username = user.Username
+	}
+
+	if userUpdate.Email == "" {
+		userUpdate.Email = user.Email
+	}
+
+	if userUpdate.Password == "" {
+		userUpdate.Password = user.Password
+	}
+
+	updateUser, err := h.userService.UpdateUser(convertUUID, userUpdate.Username,
+		userUpdate.Email, userUpdate.Password, userUpdate.Avatar, userUpdate.Bio, userUpdate.Github, userUpdate.Linkedin, userUpdate.Website)
+
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error updating user: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	res, err := json.Marshal(updateUser)
+
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error to marshal user: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(res)
 }
