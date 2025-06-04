@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	configs "github.com/SamuelSchutz13/SocialDev/config"
+	"github.com/SamuelSchutz13/SocialDev/internal/db"
 	"github.com/SamuelSchutz13/SocialDev/internal/services"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
@@ -26,7 +27,7 @@ type UserWithUsername struct {
 	Username string
 }
 
-type LoginUsderRequest struct {
+type LoginUserRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
@@ -43,16 +44,41 @@ type UpdateUserRequest struct {
 	Website  string    `json:"website"`
 }
 
+type RegisterUserRequest struct {
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
 var validate *validator.Validate
 
 func (h *UserHandler) CreateUserHandler(w http.ResponseWriter, r *http.Request) {
+	rb := r.Body
+	reader, err := io.ReadAll(rb)
+
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to read request body: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	rb.Close()
+
+	var registerUser *RegisterUserRequest
+
+	err = json.Unmarshal(reader, &registerUser)
+
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to unmarshal request body: %v", err), http.StatusBadRequest)
+		return
+	}
+
 	validate = validator.New()
 
-	username := r.FormValue("username")
-	email := r.FormValue("email")
-	password := r.FormValue("password")
+	username := registerUser.Username
+	email := registerUser.Email
+	password := registerUser.Password
 
-	err := validate.Var(username, "required,min=3,max=30")
+	err = validate.Var(username, "required,min=3,max=30")
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Invalid username: %v", err), http.StatusBadRequest)
@@ -68,6 +94,12 @@ func (h *UserHandler) CreateUserHandler(w http.ResponseWriter, r *http.Request) 
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Invalid password: %v", err), http.StatusBadRequest)
+	}
+
+	user, _ := h.userService.LoginUser(email)
+	if user != (db.User{}) {
+		http.Error(w, "User already exists", http.StatusConflict)
+		return
 	}
 
 	_, err = h.userService.CreateUser(username, email, password)
@@ -159,8 +191,8 @@ func (h *UserHandler) GetUserWithUsernameHandler(w http.ResponseWriter, r *http.
 }
 
 func (h *UserHandler) UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
-	user_id := r.URL.Path
-	userID := strings.TrimPrefix(user_id, "/user/update/")
+	id := r.URL.Path
+	userID := strings.TrimPrefix(id, "/user/update/")
 
 	convertUUID, err := uuid.Parse(userID)
 
@@ -190,42 +222,51 @@ func (h *UserHandler) UpdateUserHandler(w http.ResponseWriter, r *http.Request) 
 	err = json.Unmarshal(reader, &userUpdate)
 
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Error unmarshalling request body: %v", err), http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("Failed to unmarshal request body: %v", err), http.StatusBadRequest)
 		return
 	}
 
 	validate = validator.New()
 
-	err = validate.Var(userUpdate.Username, "required,min=3,max=30,alpha")
+	if userUpdate.Username != "" {
+		err = validate.Var(userUpdate.Username, "min=3,max=30")
 
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Invalid username: %v", err), http.StatusBadRequest)
-		return
-	}
-
-	err = validate.Var(userUpdate.Email, "required,email")
-
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Invalid email: %v", err), http.StatusBadRequest)
-		return
-	}
-
-	err = validate.Var(userUpdate.Password, "required,min=6,max=12")
-
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Invalid password: %v", err), http.StatusBadRequest)
-		return
-	}
-
-	if userUpdate.Username == "" {
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Invalid username: %v", err), http.StatusBadRequest)
+			return
+		}
+	} else {
 		userUpdate.Username = user.Username
 	}
 
-	if userUpdate.Email == "" {
+	if userUpdate.Email != "" {
+		err = validate.Var(userUpdate.Email, "email")
+
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Invalid email: %v", err), http.StatusBadRequest)
+			return
+		}
+	} else {
 		userUpdate.Email = user.Email
 	}
 
-	if userUpdate.Password == "" {
+	if userUpdate.Password != "" {
+		err = validate.Var(userUpdate.Password, "min=6,mas=12")
+
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Invalid password: %v", err), http.StatusBadRequest)
+			return
+		}
+
+		passwordHash, err := bcrypt.GenerateFromPassword([]byte(userUpdate.Password), bcrypt.DefaultCost)
+
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to hash password: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		userUpdate.Password = string(passwordHash)
+	} else {
 		userUpdate.Password = user.Password
 	}
 
