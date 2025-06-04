@@ -79,3 +79,13 @@ func (r *UserRepository) DeleteUser(ctx context.Context, user_id uuid.UUID) erro
 
 	return err
 }
+
+func (r *UserRepository) LoginUser(ctx context.Context, email string) (db.User, error) {
+	user, err := r.queries.GetUserWithEmail(ctx, email)
+
+	if err != nil {
+		log.Printf("%v", err)
+	}
+
+	return user, err
+}

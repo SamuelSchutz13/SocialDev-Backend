@@ -7,6 +7,9 @@ SELECT * FROM users WHERE user_id = $1 LIMIT 1;
 -- name: GetUserWithUsername :one
 SELECT username, avatar FROM users WHERE username LIKE $1;
 
+-- name: GetUserWithEmail :one
+SELECT * FROM users WHERE email = $1 LIMIT 1;
+
 -- name: CreateUser :one
 INSERT INTO users (
     user_id, username, email, password

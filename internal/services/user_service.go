@@ -78,3 +78,8 @@ func (s *UserService) DeleteUser(userID uuid.UUID) error {
 	ctx := context.Background()
 	return s.userRepo.DeleteUser(ctx, userID)
 }
+
+func (s *UserService) LoginUser(email string) (db.User, error) {
+	ctx := context.Background()
+	return s.userRepo.LoginUser(ctx, email)
+}

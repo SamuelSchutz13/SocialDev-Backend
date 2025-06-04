@@ -12,7 +12,7 @@ func NewConnectionDB() (*sql.DB, error) {
 	conn, err := sql.Open("postgres", coonStr)
 
 	if err != nil {
-		log.Fatal("Error connecting to the database:")
+		log.Fatal("Error connecting to the database")
 	}
 
 	return conn, err

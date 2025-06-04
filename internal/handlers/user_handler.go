@@ -7,9 +7,11 @@ import (
 	"net/http"
 	"strings"
 
+	configs "github.com/SamuelSchutz13/SocialDev/config"
 	"github.com/SamuelSchutz13/SocialDev/internal/services"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserHandler struct {
@@ -22,6 +24,11 @@ func NewUserHandler(userService *services.UserService) *UserHandler {
 
 type UserWithUsername struct {
 	Username string
+}
+
+type LoginUsderRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 type UpdateUserRequest struct {
@@ -65,7 +72,7 @@ func (h *UserHandler) CreateUserHandler(w http.ResponseWriter, r *http.Request) 
 
 	_, err = h.userService.CreateUser(username, email, password)
 	if err != nil {
-		http.Error(w, "Failed to create user", http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("Failed to create user: %v", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -80,21 +87,21 @@ func (h *UserHandler) GetUserHandler(w http.ResponseWriter, r *http.Request) {
 	uuid, err := uuid.Parse(userID)
 
 	if err != nil {
-		http.Error(w, "Invalid user ID format", http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("Invalid user ID format: %v", err), http.StatusBadRequest)
 		return
 	}
 
 	user, err := h.userService.GetUser(uuid)
 
 	if err != nil {
-		http.Error(w, "Failed to get user", http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("Failed to get user: %v", err), http.StatusInternalServerError)
 		return
 	}
 
 	res, err := json.Marshal(user)
 
 	if err != nil {
-		http.Error(w, "Failed to marshal user", http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("Failed to marshal user: %v", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -106,14 +113,14 @@ func (h *UserHandler) GetAllUsersHandler(w http.ResponseWriter, r *http.Request)
 	users, err := h.userService.GetAllUsers()
 
 	if err != nil {
-		http.Error(w, "Failed to get users", http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("Failed to get users: %v", err), http.StatusInternalServerError)
 		return
 	}
 
 	res, err := json.Marshal(users)
 
 	if err != nil {
-		http.Error(w, "Failed to marshal users", http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("Failed to marshal users: %v", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -136,14 +143,14 @@ func (h *UserHandler) GetUserWithUsernameHandler(w http.ResponseWriter, r *http.
 	user, err := h.userService.GetUserWithUsername(username)
 
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Error getting user with username: %v", err), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("Failed to get user with username: %v", err), http.StatusInternalServerError)
 		return
 	}
 
 	res, err := json.Marshal(user)
 
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Error marshalling user: %v", err), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("Failed to marshal user: %v", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -248,7 +255,7 @@ func (h *UserHandler) DeleteUserHandler(w http.ResponseWriter, r *http.Request) 
 	uuid, err := uuid.Parse(userID)
 
 	if err != nil {
-		http.Error(w, "Invalid user ID format", http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("Invalid user ID format: %v", err), http.StatusBadRequest)
 		return
 	}
 
@@ -268,4 +275,73 @@ func (h *UserHandler) DeleteUserHandler(w http.ResponseWriter, r *http.Request) 
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("User deleted successfully"))
+}
+
+func (h *UserHandler) LoginUserHandler(w http.ResponseWriter, r *http.Request) {
+	rb := r.Body
+	reader, err := io.ReadAll(rb)
+
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to read request body: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	rb.Close()
+
+	var userLogin *UpdateUserRequest
+
+	err = json.Unmarshal(reader, &userLogin)
+
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to unmarshal request body: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	validate = validator.New()
+
+	err = validate.Var(userLogin.Email, "required,email")
+
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid email: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	err = validate.Var(userLogin.Password, "required,min=6,max=12")
+
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid password: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	user, err := h.userService.LoginUser(userLogin.Email)
+
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to login user: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(userLogin.Password))
+
+	if err != nil {
+		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
+		return
+	}
+
+	res, err := json.Marshal(user)
+
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to marshal user: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	token, err := configs.CreateToken(user.Username)
+
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to created token: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(res))
+	w.Write([]byte(token))
 }
