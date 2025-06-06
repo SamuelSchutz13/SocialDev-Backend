@@ -13,17 +13,17 @@ CREATE TABLE users (
 );
 
 CREATE TABLE roles (
-    roles_id UUID PRIMARY KEY,
-    name VARCHAR(50),
+    role_id UUID PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE user_roles (
     user_id UUID NOT NULL,
-    roles_id UUID NOT NULL,
+    role_id UUID NOT NULL,
     CONSTRAINT fk_user_roles_user FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE CASCADE,
-    CONSTRAINT fk_user_roles_role FOREIGN KEY (roles_id) REFERENCES roles (roles_id) ON DELETE CASCADE
+    CONSTRAINT fk_user_roles_role FOREIGN KEY (role_id) REFERENCES roles (role_id) ON DELETE CASCADE
 );
 
 CREATE TABLE posts (

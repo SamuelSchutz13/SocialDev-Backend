@@ -51,7 +51,8 @@ func (r *UserRepository) GetAllUsers(ctx context.Context) ([]db.User, error) {
 }
 
 func (r *UserRepository) GetUserWithUsername(ctx context.Context, username string) (db.GetUserWithUsernameRow, error) {
-	getUserWithUsername, err := r.queries.GetUserWithUsername(ctx, username)
+	usernamePattern := username + "%"
+	getUserWithUsername, err := r.queries.GetUserWithUsername(ctx, usernamePattern)
 
 	if err != nil {
 		log.Printf("%v", err)

@@ -39,32 +39,33 @@ DELETE FROM users WHERE user_id = $1;
 SELECT * FROM roles;
 
 -- name: GetRole :one
-SELECT * FROM roles WHERE roles_id = $1 LIMIT 1;
+SELECT * FROM roles WHERE role_id = $1 LIMIT 1;
 
--- name: GetRolesWithName :many
+-- name: GetRoleWithName :many
 SELECT * FROM roles WHERE name = $1;
 
 -- name: CreateRole :one
 INSERT INTO roles (
-    roles_id, name
+    role_id, name
 ) VALUES ( 
     $1, $2 
 ) RETURNING *;
 
--- name: UpdateRole :exec
+-- name: UpdateRole :one
 UPDATE roles 
     SET name = $2 
-WHERE roles_id = $1;
+WHERE role_id = $1
+RETURNING *;
 
 -- name: DeleteRole :exec
-DELETE FROM roles WHERE roles_id = $1;
+DELETE FROM roles WHERE role_id = $1;
 
--- name: CreateUserWithRoles :one
+-- name: CreateUserWithRole :one
 INSERT INTO user_roles (
-    user_id, roles_id
+    user_id, role_id
 ) VALUES ( 
     $1, $2 
 ) RETURNING *;
 
--- name: DeleteUserWithRoles :exec
-DELETE FROM user_roles WHERE user_id = $1 AND roles_id = $2;
+-- name: DeleteUserWithRole :exec
+DELETE FROM user_roles WHERE user_id = $1 AND role_id = $2;
