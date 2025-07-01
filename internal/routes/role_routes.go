@@ -15,4 +15,12 @@ func SetupRoleRoutes(r *http.ServeMux, queries *db.Queries) {
 	roleHandler := handlers.NewRoleHandler(roleService)
 
 	r.HandleFunc("POST /role/create", roleHandler.CreateRoleHandler)
+	r.HandleFunc("GET /role/{role_id}", roleHandler.GetRoleHandler)
+	r.HandleFunc("GET /roles/", roleHandler.GetAllRolesHandler)
+	r.HandleFunc("GET /role/filters", roleHandler.GetRoleWithNameHandler)
+	r.HandleFunc("PATCH /role/{role_id}", roleHandler.UpdateRoleHandler)
+	r.HandleFunc("DELETE /role/{role_id}", roleHandler.DeleteRoleHandler)
+
+	r.HandleFunc("POST /role/user", roleHandler.CreateUserWithRoleHandler)
+	r.HandleFunc("DELETE role/user", roleHandler.DeleteUserWithRoleHandler)
 }

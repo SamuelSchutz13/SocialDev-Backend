@@ -62,7 +62,7 @@ func (r *RoleService) CreateUserWithRole(user_id uuid.UUID, role_id uuid.UUID) (
 	ctx := context.Background()
 
 	params := db.CreateUserWithRoleParams{
-		UserID: uuid.New(),
+		UserID: user_id,
 		RoleID: role_id,
 	}
 

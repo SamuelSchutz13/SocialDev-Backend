@@ -1,0 +1,28 @@
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: socialdev
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: socialdev
+    ports:
+      - '5432:5432'
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  app:
+    build:
+      context: .
+      target: builder
+    command: ["go", "run", "./cmd/server/"]
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgres://socialdev:root@db:5432/socialdev?sslmode=disable
+    ports:
+      - '8000:8000'
+    networks:
+      - social-network
+
+volumes:
+  db-data:

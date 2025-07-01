@@ -53,6 +53,8 @@ type RegisterUserRequest struct {
 var validate *validator.Validate
 
 func (h *UserHandler) CreateUserHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	rb := r.Body
 	reader, err := io.ReadAll(rb)
 
@@ -107,6 +109,7 @@ func (h *UserHandler) CreateUserHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	_, err = h.userService.CreateUser(username, email, password)
+
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to create user: %v", err), http.StatusInternalServerError)
 		return

@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/SamuelSchutz13/SocialDev/internal/db"
+	"github.com/SamuelSchutz13/SocialDev/internal/entity"
 	"github.com/SamuelSchutz13/SocialDev/internal/repository"
 	"github.com/SamuelSchutz13/SocialDev/utils"
 	"github.com/google/uuid"
@@ -23,14 +24,14 @@ func GetUserService(userRepo *repository.UserRepository) *UserService {
 	return &UserService{userRepo: userRepo}
 }
 
-func (s *UserService) CreateUser(username, email, password string) (db.User, error) {
+func (s *UserService) CreateUser(username, email, password string) (entity.UserResponse, error) {
 	ctx := context.Background()
 
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 
 	if err != nil {
 		log.Printf("Error hashing password: %v", err)
-		return db.User{}, err
+		return entity.UserResponse{}, err
 	}
 
 	userParams := db.CreateUserParams{

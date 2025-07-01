@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/SamuelSchutz13/SocialDev/internal/db"
+	"github.com/SamuelSchutz13/SocialDev/internal/entity"
 	"github.com/google/uuid"
 )
 
@@ -20,14 +21,25 @@ func GetUserRepository(queries *db.Queries) *UserRepository {
 	return &UserRepository{queries: queries}
 }
 
-func (r *UserRepository) CreateUser(ctx context.Context, params db.CreateUserParams) (db.User, error) {
+func (r *UserRepository) CreateUser(ctx context.Context, params db.CreateUserParams) (entity.UserResponse, error) {
 	user, err := r.queries.CreateUser(ctx, params)
 
 	if err != nil {
 		log.Printf("%v", err)
 	}
 
-	return user, err
+	var userResponse entity.UserResponse
+
+	userResponse.UserID = user.UserID.String()
+	userResponse.Username = user.Username
+	userResponse.Email = user.Email
+	userResponse.Avatar = user.Avatar.String
+	userResponse.Bio = user.Bio.String
+	userResponse.Github = user.Github.String
+	userResponse.Linkedin = user.Linkedin.String
+	userResponse.Website = user.Website.String
+
+	return userResponse, err
 }
 
 func (r *UserRepository) GetUser(ctx context.Context, user_id uuid.UUID) (db.User, error) {
