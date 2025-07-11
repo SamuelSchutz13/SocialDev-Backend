@@ -10,6 +10,7 @@ import (
 	"github.com/SamuelSchutz13/SocialDev/internal/entity"
 	"github.com/SamuelSchutz13/SocialDev/internal/middlewares"
 	"github.com/SamuelSchutz13/SocialDev/internal/services"
+	"github.com/SamuelSchutz13/SocialDev/utils"
 	"github.com/go-playground/validator/v10"
 )
 
@@ -26,6 +27,13 @@ func NewPostHandler(postService *services.PostService) *PostHandler {
 func (ph *PostHandler) CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	defer r.Body.Close()
+
+	userID, ok := r.Context().Value(middlewares.UserIDKey).(string)
+
+	if !ok || userID == "" {
+		http.Error(w, "User ID not found in context", http.StatusInternalServerError)
+		return
+	}
 
 	reader, err := io.ReadAll(r.Body)
 
@@ -79,6 +87,88 @@ func (ph *PostHandler) CreatePostHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(response)
+}
+
+func (ph *PostHandler) GetPostHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	defer r.Body.Close()
+
+	id := r.URL.Path
+	postID := strings.TrimPrefix(id, "/posts/")
+
+	post, err := ph.postService.GetPost(postID)
+
+	if err != nil {
+		http.Error(w, "Error to get post", http.StatusInternalServerError)
+		return
+	}
+
+	response := map[string]interface{}{
+		"post": post,
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
+func (ph *PostHandler) GetAllPostsHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	defer r.Body.Close()
+
+	posts, err := ph.postService.GetAllPosts()
+
+	if err != nil {
+		http.Error(w, "Error to get all posts", http.StatusInternalServerError)
+		return
+	}
+
+	if len(posts) == 0 {
+		http.Error(w, "No posts found", http.StatusNotFound)
+		return
+	}
+
+	response := map[string]interface{}{
+		"posts": posts,
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
+func (ph *PostHandler) GetUserPostsHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	defer r.Body.Close()
+
+	accessToken, ok := r.Context().Value(middlewares.UserIDKey).(string)
+
+	if !ok || accessToken == "" {
+		http.Error(w, "User ID not found in context", http.StatusInternalServerError)
+		return
+	}
+
+	vars := r.PathValue("user_id")
+
+	if vars == "" {
+		http.Error(w, "User ID not provided", http.StatusBadRequest)
+		return
+	}
+
+	userID := vars
+
+	posts, err := ph.postService.GetAllUserPosts(userID)
+
+	if err != nil {
+		http.Error(w, "Error to get user posts", http.StatusInternalServerError)
+		return
+	}
+
+	response := map[string]interface{}{
+		"user_id": userID,
+		"posts":   posts,
+	}
+
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
 }
 
@@ -150,4 +240,28 @@ func (ph *PostHandler) UpdatePostHandler(w http.ResponseWriter, r *http.Request)
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(response)
+}
+
+func (ph *PostHandler) DeletePostHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	defer r.Body.Close()
+
+	id := r.URL.Path
+	postID := strings.TrimPrefix(id, "/posts/")
+
+	userID, ok := r.Context().Value(middlewares.UserIDKey).(string)
+
+	if !ok || userID == "" {
+		http.Error(w, "User ID not found in context", http.StatusInternalServerError)
+		return
+	}
+
+	err := ph.postService.DeletePost(postID, userID)
+
+	if err != nil {
+		http.Error(w, "Error to delete post", http.StatusInternalServerError)
+		return
+	}
+
+	utils.NewMessageResponse(w, http.StatusOK, "Post deleted successfully")
 }

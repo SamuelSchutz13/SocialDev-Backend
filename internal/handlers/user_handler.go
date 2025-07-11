@@ -9,6 +9,7 @@ import (
 
 	configs "github.com/SamuelSchutz13/SocialDev/config"
 	"github.com/SamuelSchutz13/SocialDev/internal/db"
+	"github.com/SamuelSchutz13/SocialDev/internal/entity"
 	"github.com/SamuelSchutz13/SocialDev/internal/services"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
@@ -51,8 +52,8 @@ type RegisterUserRequest struct {
 }
 
 type UserResponse struct {
-	User  db.User `json:"user"`
-	Token string  `json:"token"`
+	User  entity.UserResponse `json:"user"`
+	Token string              `json:"token"`
 }
 
 var validate *validator.Validate
@@ -67,8 +68,6 @@ func (h *UserHandler) CreateUserHandler(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, fmt.Sprintf("Failed to read request body: %v", err), http.StatusBadRequest)
 		return
 	}
-
-	r.Body.Close()
 
 	var registerUser *RegisterUserRequest
 
@@ -113,14 +112,34 @@ func (h *UserHandler) CreateUserHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	_, err = h.userService.CreateUser(username, email, password)
+	userResponse, err := h.userService.CreateUser(username, email, password)
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to create user: %v", err), http.StatusInternalServerError)
 		return
 	}
 
+	token, err := configs.CreateToken(userResponse.UserID)
+
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to create token: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	response := UserResponse{
+		User:  userResponse,
+		Token: token,
+	}
+
+	res, err := json.Marshal(response)
+
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to marshal user: %v", err), http.StatusInternalServerError)
+		return
+	}
+
 	w.WriteHeader(http.StatusCreated)
+	w.Write(res)
 	w.Write([]byte("User created successfully"))
 }
 
@@ -380,25 +399,16 @@ func (h *UserHandler) LoginUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := configs.CreateToken(user.UserID.String())
+	jwtToken, err := configs.CreateToken(user.UserID.String())
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to created token: %v", err), http.StatusInternalServerError)
 		return
 	}
 
-	response := UserResponse{
-		User:  user,
-		Token: token,
-	}
-
-	res, err := json.Marshal(response)
-
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to marshal user: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(res))
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"token": jwtToken,
+		"user":  user,
+	})
 }
