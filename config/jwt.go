@@ -7,7 +7,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var secretKey = []byte("secret-key")
+var cfg = LoadConfig()
 
 func CreateToken(userId string) (string, error) {
 
@@ -16,7 +16,7 @@ func CreateToken(userId string) (string, error) {
 		"exp":     time.Now().Add(time.Hour * 24).Unix(),
 	})
 
-	tokenString, err := token.SignedString(secretKey)
+	tokenString, err := token.SignedString([]byte(cfg.JWTSecret))
 
 	if err != nil {
 		return "", err
@@ -27,7 +27,7 @@ func CreateToken(userId string) (string, error) {
 
 func VerifyToken(tokenString string) error {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		return secretKey, nil
+		return []byte(cfg.JWTSecret), nil
 	})
 
 	if err != nil {
@@ -35,7 +35,7 @@ func VerifyToken(tokenString string) error {
 	}
 
 	if !token.Valid {
-		return fmt.Errorf("invalid token")
+		return fmt.Errorf("Invalid token")
 	}
 
 	return nil
