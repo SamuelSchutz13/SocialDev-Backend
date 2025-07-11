@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strings"
 
 	//configs "github.com/SamuelSchutz13/SocialDev/config"
 	"github.com/SamuelSchutz13/SocialDev/internal/entity"
+	"github.com/SamuelSchutz13/SocialDev/internal/middlewares"
 	"github.com/SamuelSchutz13/SocialDev/internal/services"
 	"github.com/go-playground/validator/v10"
 )
@@ -58,7 +60,13 @@ func (ph *PostHandler) CreatePostHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	createPost, err := ph.postService.CreatePost(postCreate.UserID, postCreate.Title, postCreate.Content)
+	createPost, err := ph.postService.CreatePost(
+		postCreate.UserID,
+		postCreate.Title,
+		postCreate.Content,
+		postCreate.Photo,
+		postCreate.Video,
+	)
 
 	if err != nil {
 		http.Error(w, "Error to create post", http.StatusInternalServerError)
@@ -78,6 +86,16 @@ func (ph *PostHandler) UpdatePostHandler(w http.ResponseWriter, r *http.Request)
 	w.Header().Set("Content-Type", "application/json")
 	defer r.Body.Close()
 
+	id := r.URL.Path
+	postID := strings.TrimPrefix(id, "/posts/")
+
+	userID, ok := r.Context().Value(middlewares.UserIDKey).(string)
+
+	if !ok || userID == "" {
+		http.Error(w, "User ID not found in context", http.StatusInternalServerError)
+		return
+	}
+
 	reader, err := io.ReadAll(r.Body)
 
 	if err != nil {
@@ -85,9 +103,9 @@ func (ph *PostHandler) UpdatePostHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	var postCreate *entity.PostResponse
+	var postUpdate entity.PostResponse
 
-	err = json.Unmarshal(reader, &postCreate)
+	err = json.Unmarshal(reader, &postUpdate)
 
 	if err != nil {
 		http.Error(w, "Error to unmarshal request body", http.StatusBadRequest)
@@ -96,7 +114,7 @@ func (ph *PostHandler) UpdatePostHandler(w http.ResponseWriter, r *http.Request)
 
 	validate = validator.New()
 
-	err = validate.Struct(postCreate)
+	err = validate.Struct(postUpdate)
 
 	if err != nil {
 		errors := err.(validator.ValidationErrors)
@@ -111,7 +129,14 @@ func (ph *PostHandler) UpdatePostHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	createPost, err := ph.postService.CreatePost(postCreate.UserID, postCreate.Title, postCreate.Content)
+	createPost, err := ph.postService.UpdatePost(
+		postID,
+		postUpdate.UserID,
+		postUpdate.Title,
+		postUpdate.Content,
+		postUpdate.Photo,
+		postUpdate.Video,
+	)
 
 	if err != nil {
 		http.Error(w, "Error to create post", http.StatusInternalServerError)

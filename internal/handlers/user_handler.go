@@ -50,20 +50,25 @@ type RegisterUserRequest struct {
 	Password string `json:"password"`
 }
 
+type UserResponse struct {
+	User  db.User `json:"user"`
+	Token string  `json:"token"`
+}
+
 var validate *validator.Validate
 
 func (h *UserHandler) CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	defer r.Body.Close()
 
-	rb := r.Body
-	reader, err := io.ReadAll(rb)
+	reader, err := io.ReadAll(r.Body)
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to read request body: %v", err), http.StatusBadRequest)
 		return
 	}
 
-	rb.Close()
+	r.Body.Close()
 
 	var registerUser *RegisterUserRequest
 
@@ -258,7 +263,7 @@ func (h *UserHandler) UpdateUserHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if userUpdate.Password != "" {
-		err = validate.Var(userUpdate.Password, "min=6,mas=12")
+		err = validate.Var(userUpdate.Password, "min=6,max=12")
 
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Invalid password: %v", err), http.StatusBadRequest)
@@ -336,7 +341,7 @@ func (h *UserHandler) LoginUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	rb.Close()
 
-	var userLogin *UpdateUserRequest
+	var userLogin *LoginUserRequest
 
 	err = json.Unmarshal(reader, &userLogin)
 
@@ -375,21 +380,25 @@ func (h *UserHandler) LoginUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := json.Marshal(user)
-
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to marshal user: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	token, err := configs.CreateToken(user.Username)
+	token, err := configs.CreateToken(user.UserID.String())
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to created token: %v", err), http.StatusInternalServerError)
 		return
 	}
 
+	response := UserResponse{
+		User:  user,
+		Token: token,
+	}
+
+	res, err := json.Marshal(response)
+
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to marshal user: %v", err), http.StatusInternalServerError)
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(res))
-	w.Write([]byte(token))
 }

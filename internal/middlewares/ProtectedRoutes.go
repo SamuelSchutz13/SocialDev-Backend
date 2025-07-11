@@ -1,6 +1,7 @@
-package middelwares
+package middlewares
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -9,6 +10,10 @@ import (
 )
 
 var jwtSecret = []byte("secret-key")
+
+type contextKey string
+
+const UserIDKey contextKey = "user_id"
 
 func ProtectedRoutes(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -39,11 +44,25 @@ func ProtectedRoutes(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		_, ok := token.Claims.(jwt.MapClaims)
+		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
 			http.Error(w, "Invalid Token Claims", http.StatusUnauthorized)
 			return
 		}
+
+		userID, ok := claims["user_id"].(string)
+
+		if !ok {
+			if userIDFloat, ok := claims["user_id"].(float64); ok {
+				userID = fmt.Sprint(int64(userIDFloat))
+			} else {
+				http.Error(w, "Invalid User ID in Token", http.StatusUnauthorized)
+				return
+			}
+		}
+
+		ctx := context.WithValue(r.Context(), UserIDKey, userID)
+		r = r.WithContext(ctx)
 
 		next(w, r)
 	}

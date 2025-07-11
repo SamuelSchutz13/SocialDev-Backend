@@ -32,8 +32,8 @@ func (r *PostRepository) CreatePost(ctx context.Context, params db.CreatePostPar
 
 	postResponse.PostID = post.PostID.String()
 	postResponse.UserID = post.UserID.String()
-	postResponse.Title = post.Title
-	postResponse.Content = post.Content
+	postResponse.Title = post.Title.String
+	postResponse.Content = post.Content.String
 	postResponse.Photo = post.Photo.String
 	postResponse.Video = post.Video.String
 	postResponse.CreatedAt = post.CreatedAt.Time.String()
@@ -54,8 +54,8 @@ func (r *PostRepository) GetPost(ctx context.Context, postID uuid.UUID) (entity.
 
 	postResponse.PostID = post.PostID.String()
 	postResponse.UserID = post.UserID.String()
-	postResponse.Title = post.Title
-	postResponse.Content = post.Content
+	postResponse.Title = post.Title.String
+	postResponse.Content = post.Content.String
 	postResponse.Photo = post.Photo.String
 	postResponse.Video = post.Video.String
 	postResponse.CreatedAt = post.CreatedAt.Time.String()
@@ -79,8 +79,8 @@ func (r *PostRepository) GetAllUserPosts(ctx context.Context, userID uuid.UUID) 
 
 		postResponse.PostID = post.PostID.String()
 		postResponse.UserID = post.UserID.String()
-		postResponse.Title = post.Title
-		postResponse.Content = post.Content
+		postResponse.Title = post.Title.String
+		postResponse.Content = post.Content.String
 		postResponse.Photo = post.Photo.String
 		postResponse.Video = post.Video.String
 		postResponse.CreatedAt = post.CreatedAt.Time.String()
@@ -104,8 +104,8 @@ func (r *PostRepository) GetUserPost(ctx context.Context, params db.GetUserPostP
 
 	postResponse.PostID = post.PostID.String()
 	postResponse.UserID = post.UserID.String()
-	postResponse.Title = post.Title
-	postResponse.Content = post.Content
+	postResponse.Title = post.Title.String
+	postResponse.Content = post.Content.String
 	postResponse.Photo = post.Photo.String
 	postResponse.Video = post.Video.String
 	postResponse.CreatedAt = post.CreatedAt.Time.String()
@@ -129,8 +129,8 @@ func (r *PostRepository) GetAllPosts(ctx context.Context) ([]entity.PostResponse
 
 		postResponse.PostID = post.PostID.String()
 		postResponse.UserID = post.UserID.String()
-		postResponse.Title = post.Title
-		postResponse.Content = post.Content
+		postResponse.Title = post.Title.String
+		postResponse.Content = post.Content.String
 		postResponse.Photo = post.Photo.String
 		postResponse.Video = post.Video.String
 		postResponse.CreatedAt = post.CreatedAt.Time.String()
@@ -153,8 +153,8 @@ func (r *PostRepository) UpdatePost(ctx context.Context, params db.UpdatePostPar
 
 	postResponse.PostID = post.PostID.String()
 	postResponse.UserID = post.UserID.String()
-	postResponse.Title = post.Title
-	postResponse.Content = post.Content
+	postResponse.Title = post.Title.String
+	postResponse.Content = post.Content.String
 	postResponse.Photo = post.Photo.String
 	postResponse.Video = post.Video.String
 	postResponse.CreatedAt = post.CreatedAt.Time.String()

@@ -20,6 +20,7 @@ func main() {
 	defer conn.Close()
 
 	queries := db.New(conn)
+
 	r := routes.SetupRoutes(queries)
 
 	fmt.Println("Server is running on http://localhost:8080")

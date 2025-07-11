@@ -30,8 +30,8 @@ func (p *PostService) CreatePost(user_id, title, content, photo, video string) (
 
 	params := db.CreatePostParams{
 		UserID:  user_id_UUID,
-		Title:   title,
-		Content: content,
+		Title:   sql.NullString{String: title, Valid: title != ""},
+		Content: sql.NullString{String: content, Valid: content != ""},
 		Photo:   sql.NullString{String: photo, Valid: photo != ""},
 		Video:   sql.NullString{String: video, Valid: video != ""},
 	}
@@ -111,8 +111,8 @@ func (p *PostService) UpdatePost(post_id, user_id, title, content, photo, video 
 	params := db.UpdatePostParams{
 		PostID:  post_id_UUID,
 		UserID:  user_id_UUID,
-		Title:   title,
-		Content: content,
+		Title:   sql.NullString{String: title, Valid: title != ""},
+		Content: sql.NullString{String: content, Valid: content != ""},
 		Photo:   sql.NullString{String: photo, Valid: photo != ""},
 		Video:   sql.NullString{String: video, Valid: video != ""},
 	}
