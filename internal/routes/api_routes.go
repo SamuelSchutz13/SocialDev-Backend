@@ -10,4 +10,5 @@ func SetupAPIRoutes(r *http.ServeMux, queries *db.Queries) {
 	SetupUserRoutes(r, queries)
 	SetupRoleRoutes(r, queries)
 	SetupPostRoutes(r, queries)
+	SetupLikeRoutes(r, queries)
 }
