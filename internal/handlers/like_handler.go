@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/SamuelSchutz13/SocialDev/internal/db"
 	"github.com/SamuelSchutz13/SocialDev/internal/services"
 	"github.com/SamuelSchutz13/SocialDev/utils"
 	"github.com/google/uuid"
@@ -46,9 +47,9 @@ func (h *LikeHandler) CreateLikeHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	_, err = h.likeService.GetLike(userIdUUID, postIdUUID)
+	isLiked, err := h.likeService.GetLike(userIdUUID, postIdUUID)
 
-	if err != nil {
+	if isLiked != (db.Like{}) {
 		utils.NewErrorResponse(w, http.StatusBadRequest, "Like already exist", err.Error())
 		return
 	}

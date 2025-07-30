@@ -2,3 +2,4 @@
 /internal/db/migrations
 /go.mod
 /go.sum
+/docker-compose.yml
